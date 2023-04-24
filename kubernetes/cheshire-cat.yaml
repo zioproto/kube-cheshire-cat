@@ -1,0 +1,128 @@
+# depends on:
+# helm install cheshire-cat qdrant/qdrant
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: core
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: core
+  template:
+    metadata:
+      labels:
+        run: core
+    spec:
+      containers:
+      - name: core
+        image: HUB/cheshire-cat-core:latest
+        imagePullPolicy: Always
+        env:
+        - name: ADMIN_HOST
+          value: "UNIQUE_DNS_PREFIX-admin.eastus.cloudapp.azure.com"
+        - name: ADMIN_PORT
+          value: "80"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: SQLITE_DATABASE_URL
+          value: "sqlite:///database/metadata-v3.db"
+        - name: VECTOR_MEMORY_HOST
+          value: "cheshire-cat-qdrant"
+        command: ["uvicorn", "cat.main:cheshire_cat_api", "--host", "0.0.0.0", "--port", "1865", "--log-config", "./logger.yml"]
+        ports:
+        - containerPort: 1865
+        readinessProbe:
+          tcpSocket:
+            port: 1865
+          initialDelaySeconds: 6
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "1.5Gi" # TODO: 1.5Gi ?
+            cpu: "1000m" # TODO: 1 core ?
+        volumeMounts:
+        - name: database
+          mountPath: /core/database
+      securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+      volumes:
+      - name: database
+        persistentVolumeClaim:
+          claimName: sqlite-disk
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: sqlite-disk
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-csi
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core
+spec:
+  ports:
+  - port: 1865
+    protocol: TCP
+    targetPort: 1865
+  selector:
+    run: core
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: admin
+  template:
+    metadata:
+      labels:
+        run: admin
+    spec:
+      containers:
+      - name: admin
+        image: HUB/cheshire-cat-admin:latest
+        imagePullPolicy: Always
+        env:
+        - name: CORE_HOST
+          value: "UNIQUE_DNS_PREFIX-core.eastus.cloudapp.azure.com"
+        - name: CORE_PORT
+          value: "1865"
+        ports:
+        - containerPort: 3000
+        readinessProbe:
+          tcpSocket:
+            port: 3000
+          initialDelaySeconds: 6
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "1.5Gi" # TODO: 1.5Gi ?
+            cpu: "1000m" # TODO: 1 core ?
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin
+spec:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    run: admin
+  type: ClusterIP

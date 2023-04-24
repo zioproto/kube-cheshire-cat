@@ -1,0 +1,11 @@
+# Optional: apply to see envoy access logs
+---
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: mesh-default
+  namespace: aks-istio-system
+spec:
+  accessLogging:
+    - providers:
+      - name: envoy
