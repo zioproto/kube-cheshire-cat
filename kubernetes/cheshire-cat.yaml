@@ -102,6 +102,8 @@ spec:
           value: "UNIQUE_DNS_PREFIX-core.eastus.cloudapp.azure.com"
         - name: CORE_PORT
           value: "1865"
+        - name: CORE_USE_SECURE_PROTOCOLS
+          value: "true"
         ports:
         - containerPort: 3000
         readinessProbe:
