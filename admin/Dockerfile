@@ -3,7 +3,7 @@
 
 FROM curlimages/curl as build
 RUN mkdir -p /tmp/cheshire-cat
-RUN curl -sL https://github.com/pieroit/cheshire-cat/archive/pull/137/head.tar.gz | tar xz -C /tmp/cheshire-cat --strip-components=1
+RUN curl -sL https://github.com/pieroit/cheshire-cat/archive/main.tar.gz | tar xz -C /tmp/cheshire-cat --strip-components=1
 
 FROM node:18.16.0-bullseye-slim as runner
 COPY --from=build /tmp/cheshire-cat/admin /app
