@@ -2,6 +2,11 @@
 
 This is a simple example of how to run the [cheshire cat](http://github.com/pieroit/cheshire-cat) on Azure Kubernetes Service.
 
+**WARNING**: this is a proof of concept, not a production ready deployment. The admin container running the Node.js web interface does not implement any authentication or authorization to connect to the core containers. The core container is exposed to the internet without any authentication or authorization, and it is possible to leak your OpenAI keys to the world. Use at your own risk.
+
+* https://github.com/pieroit/cheshire-cat/issues/198
+* PR https://github.com/zioproto/kube-cheshire-cat/pull/1
+
 ## Docker images
 
 The necessary Docker images are available at:
@@ -114,5 +119,72 @@ sed -e "s/EMAIL/${EMAIL}/" |
 sed -e "s/UNIQUE_DNS_PREFIX/${UNIQUE_DNS_PREFIX}/" |
 kubectl apply -f -
 ```
+## Use Cheshire Cat with Azure OpenAI
 
+You can use the Cheshire Cat with Azure OpenAI. Follow these steps:
+
+Deploy an Azure OpenAI resource
+
+```
+az cognitiveservices account create \
+-n cheshire-cat \
+-g cheshire-cat \
+-l eastus \
+--kind OpenAI \
+--sku s0
+```
+
+Deploy the models for completion and for embeddings:
+
+```
+az cognitiveservices account deployment create \
+   -g cheshire-cat\
+   -n cheshire-cat \
+   --deployment-name gpt-35-turbo \
+   --model-name gpt-35-turbo \
+   --model-version "0301"  \
+   --model-format OpenAI \
+   --scale-settings-scale-type "Standard"
+
+az cognitiveservices account deployment create \
+   -g cheshire-cat\
+   -n cheshire-cat \
+   --deployment-name text-embedding-ada-002 \
+   --model-name text-embedding-ada-002 \
+   --model-version "2"  \
+   --model-format OpenAI \
+   --scale-settings-scale-type "Standard"
+```
+
+Configure to core container to use the Azure OpenAI models you just deployed,
+retrieve the key and the api endpoint with Azure CLI and push them to the
+core with an API request:
+
+```
+#!/bin/bash
+ENDPOINT=$(az cognitiveservices account show -o json \
+--name cheshire-cat \
+--resource-group cheshire-cat \
+| jq -r .properties.endpoint)
+
+
+KEY=$(az cognitiveservices account keys list -o json \
+--name cheshire-cat \
+--resource-group cheshire-cat \
+| jq -r .key1)
+
+CORE_URL="https://${UNIQUE_DNS_PREFIX}-core.eastus.cloudapp.azure.com"
+
+curl -X 'PUT' \
+  ''"$CORE_URL"':1865/settings/llm/LLMAzureOpenAIConfig' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "api_type": "azure",
+  "api_version": "2022-12-01",
+  "deployment_name": "gpt-35-turbo",
+  "model_name": "gpt-35-turbo",
+  "openai_api_base": "'"$ENDPOINT"'",
+  "openai_api_key": "'"$KEY"'"
+}'
 
