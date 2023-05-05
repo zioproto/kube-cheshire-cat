@@ -32,6 +32,8 @@ spec:
           value: "sqlite:///database/metadata-v3.db"
         - name: VECTOR_MEMORY_HOST
           value: "cheshire-cat-qdrant"
+        - name: API_KEY
+          value: "SECRET_VALUE"
         command: ["uvicorn", "cat.main:cheshire_cat_api", "--host", "0.0.0.0", "--port", "1865", "--forwarded-allow-ips", "*"]
         ports:
         - containerPort: 1865
