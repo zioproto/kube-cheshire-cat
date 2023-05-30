@@ -32,10 +32,11 @@ RUN NODEARCH= && dpkgArch="$(dpkg --print-architecture)" \
     npm run build
 
 WORKDIR /core/core
-RUN echo "\nuvicorn[standard]==0.20.0" >> requirements.txt && \
-    echo gunicorn==20.1.0 >> requirements.txt && \
-    pip install -U pip && \
-    pip install --no-cache-dir -r requirements.txt && \
+
+RUN pip install -U pip && \
+    pip install --no-cache-dir ./ && \
+    pip install --no-cache-dir gunicorn==20.1.0 && \
+    pip install --no-cache-dir uvicorn[standard]==0.20.0 && \
     adduser --disabled-password --gecos '' appuser
 
 USER appuser
