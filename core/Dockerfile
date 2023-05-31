@@ -35,7 +35,7 @@ RUN apt-get -y update && apt-get install -y curl xz-utils libmagic-mgc libmagic1
     npm install &&\
     npm run build
 
-WORKDIR /app
+WORKDIR /app/core
 USER appuser
 EXPOSE 1865
 ENV PYTHONUNBUFFERED=1

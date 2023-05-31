@@ -39,7 +39,6 @@ az aks create \
  --enable-addons monitoring \
  --resource-group cheshire-cat \
  --network-plugin azure  \
- --kubernetes-version 1.25.6  \
  --node-vm-size Standard_DS3_v2 \
  --node-count 2 \
  --auto-upgrade-channel rapid \
@@ -82,7 +81,7 @@ helm upgrade cert-manager jetstack/cert-manager \
 ```bash
 helm repo add qdrant https://qdrant.github.io/qdrant-helm
 helm repo update
-helm install --wait cheshire-cat qdrant/qdrant
+helm upgrade --install --wait cheshire-cat qdrant/qdrant
 ```
 
 ## Install the Cheshire Cat
@@ -118,6 +117,9 @@ sed -e "s/EMAIL/${EMAIL}/" |
 sed -e "s/UNIQUE_DNS_PREFIX/${UNIQUE_DNS_PREFIX}/" |
 kubectl apply -f -
 ```
+
+# Large Language Models
+
 ## Use Cheshire Cat with Azure OpenAI
 
 You can use the Cheshire Cat with Azure OpenAI. Follow these steps:
@@ -186,4 +188,16 @@ curl -X 'PUT' \
   "openai_api_base": "'"$ENDPOINT"'",
   "openai_api_key": "'"$KEY"'"
 }'
+```
+## Add a NodePools with GPUs to run local models
+```
+az aks nodepool add \
+    --resource-group cheshire-cat \
+    --cluster-name  cheshire-cat \
+    --name gpunp \
+    --node-count 1 \
+    --node-vm-size Standard_NC24ads_A100_v4 \
+    --node-taints sku=gpu:NoSchedule \
+    --aks-custom-headers UseGPUDedicatedVHD=true
 
+```

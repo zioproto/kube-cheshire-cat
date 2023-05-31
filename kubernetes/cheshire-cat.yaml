@@ -46,7 +46,7 @@ spec:
             cpu: "1000m" # TODO: 1 core ?
         volumeMounts:
         - name: database
-          mountPath: /core/core/database
+          mountPath: /app/core/database
       securityContext:
           runAsUser: 1000
           runAsGroup: 1000

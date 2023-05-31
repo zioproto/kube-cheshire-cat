@@ -7,12 +7,12 @@ metadata:
 spec:
   selector:
     matchLabels:
-      istio.io/gateway-name: cheshire-cat-admin
+      istio.io/gateway-name: cheshire-cat
   url: oci://ghcr.io/istio-ecosystem/wasm-extensions/basic_auth:1.12.0
   phase: AUTHN
   pluginConfig:
     basic_auth_rules:
-      - prefix: "/"
+      - prefix: "/admin"
         request_methods:
           - "GET"
           - "POST"
