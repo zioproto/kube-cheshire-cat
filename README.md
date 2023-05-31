@@ -10,7 +10,6 @@ This is a simple example of how to run the [cheshire cat](http://github.com/pier
 ## Docker images
 
 The necessary Docker images are available at:
-* zioproto/cheshire-cat-admin [Dockerfile](admin/Dockerfile)
 * zioproto/cheshire-cat-core [Dockerfile](core/Dockerfile)
 
 ## Create an AKS cluster
@@ -48,7 +47,7 @@ az aks create \
  --enable-asm
 
 # Get credentials
- az aks get-credentials --resource-group cheshire-cat --name cheshire-cat
+ az aks get-credentials --resource-group cheshire-cat --name cheshire-cat --overwrite-existing
 ```
 
 ## Install Gateway API
@@ -83,7 +82,7 @@ helm upgrade cert-manager jetstack/cert-manager \
 ```bash
 helm repo add qdrant https://qdrant.github.io/qdrant-helm
 helm repo update
-helm install cheshire-cat qdrant/qdrant
+helm install --wait cheshire-cat qdrant/qdrant
 ```
 
 ## Install the Cheshire Cat

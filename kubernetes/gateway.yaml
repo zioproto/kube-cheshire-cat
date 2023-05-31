@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
-  name: letsencrypt-core
+  name: letsencrypt
   namespace: default
 spec:
   acme:
@@ -13,102 +13,42 @@ spec:
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       # Secret resource that will be used to store the account's private key.
-      name: issuer-account-key-core
+      name: issuer-account-key
     solvers:
       - http01:
           gatewayHTTPRoute:
             parentRefs:
-              - name: cheshire-cat-core
+              - name: cheshire-cat
                 namespace: default
                 kind: Gateway
----
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  name: letsencrypt-admin
-  namespace: default
-spec:
-  acme:
-    # You must replace this email address with your own.
-    # Let's Encrypt will use this to contact you about expiring
-    # certificates, and issues related to your account.
-    email: EMAIL
-    server: https://acme-v02.api.letsencrypt.org/directory
-    privateKeySecretRef:
-      # Secret resource that will be used to store the account's private key.
-      name: issuer-account-key-admin
-    solvers:
-      - http01:
-          gatewayHTTPRoute:
-            parentRefs:
-              - name: cheshire-cat-admin
-                namespace: default
-                kind: Gateway
+
 ---
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: Gateway
 metadata:
-  name: cheshire-cat-core
+  name: cheshire-cat
   namespace: default
   labels:
     istio.io/rev: asm-1-17
   annotations:
-    service.beta.kubernetes.io/azure-dns-label-name: "UNIQUE_DNS_PREFIX-core"
-    service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/healthz/ready"
-    service.beta.kubernetes.io/port_80_health-probe_protocol: http
-    service.beta.kubernetes.io/port_80_health-probe_port: "15021"
-    service.beta.kubernetes.io/port_1865_health-probe_protocol: http
-    service.beta.kubernetes.io/port_1865_health-probe_port: "15021"
-    cert-manager.io/issuer: letsencrypt-core
-spec:
-  gatewayClassName: istio
-  listeners:
-  - name: http
-    hostname: UNIQUE_DNS_PREFIX-core.eastus.cloudapp.azure.com
-    protocol: HTTP
-    port: 80
-    allowedRoutes:
-      namespaces:
-        from: All
-  - hostname: UNIQUE_DNS_PREFIX-core.eastus.cloudapp.azure.com
-    name: https
-    port: 1865
-    protocol: HTTPS
-    allowedRoutes:
-      namespaces:
-        from: All
-    tls:
-      mode: Terminate
-      certificateRefs:
-          - name: cheshire-cat-core-tls
-            kind: Secret
----
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
-metadata:
-  name: cheshire-cat-admin
-  namespace: default
-  labels:
-    istio.io/rev: asm-1-17
-  annotations:
-    service.beta.kubernetes.io/azure-dns-label-name: "UNIQUE_DNS_PREFIX-admin"
+    service.beta.kubernetes.io/azure-dns-label-name: "UNIQUE_DNS_PREFIX"
     service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/healthz/ready"
     service.beta.kubernetes.io/port_80_health-probe_protocol: http
     service.beta.kubernetes.io/port_80_health-probe_port: "15021"
     service.beta.kubernetes.io/port_443_health-probe_protocol: http
     service.beta.kubernetes.io/port_443_health-probe_port: "15021"
-    cert-manager.io/issuer: letsencrypt-admin
+    cert-manager.io/issuer: letsencrypt
 spec:
   gatewayClassName: istio
   listeners:
   - name: http
+    hostname: UNIQUE_DNS_PREFIX.eastus.cloudapp.azure.com
     protocol: HTTP
-    hostname: UNIQUE_DNS_PREFIX-admin.eastus.cloudapp.azure.com
     port: 80
     allowedRoutes:
       namespaces:
         from: All
-  - hostname: UNIQUE_DNS_PREFIX-admin.eastus.cloudapp.azure.com
+  - hostname: UNIQUE_DNS_PREFIX.eastus.cloudapp.azure.com
     name: https
     port: 443
     protocol: HTTPS
@@ -118,8 +58,9 @@ spec:
     tls:
       mode: Terminate
       certificateRefs:
-          - name: cheshire-cat-admin-tls
+          - name: cheshire-cat-tls
             kind: Secret
+
 ---
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: HTTPRoute
@@ -128,7 +69,7 @@ metadata:
   namespace: default
 spec:
   parentRefs:
-  - name: cheshire-cat-core
+  - name: cheshire-cat
     namespace: default
   rules:
   - matches:
@@ -138,21 +79,4 @@ spec:
     backendRefs:
     - name: core
       port: 1865
----
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: HTTPRoute
-metadata:
-  name: admin
-  namespace: default
-spec:
-  parentRefs:
-  - name: cheshire-cat-admin
-    namespace: default
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /
-    backendRefs:
-    - name: admin
-      port: 3000
+
