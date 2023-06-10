@@ -1,10 +1,10 @@
 # Run the cheshire cat on Kubernetes
 
-This is a simple example of how to run the [cheshire cat](http://github.com/pieroit/cheshire-cat) on Azure Kubernetes Service.
+This is a simple example of how to run the [cheshire cat](http://github.com/cheshire-cat-ai/core) on Azure Kubernetes Service.
 
 **WARNING**: this is a proof of concept, not a production ready deployment. The admin container running the Node.js web interface does not implement any authentication or authorization to connect to the core containers. The core container is exposed to the internet without any authentication or authorization, and it is possible to leak your OpenAI keys to the world. Use at your own risk.
 
-* https://github.com/pieroit/cheshire-cat/issues/198
+* https://github.com/cheshire-cat-ai/admin-vue/issues/2
 * PR https://github.com/zioproto/kube-cheshire-cat/pull/1
 
 ## Docker images
@@ -118,6 +118,12 @@ sed -e "s/UNIQUE_DNS_PREFIX/${UNIQUE_DNS_PREFIX}/" |
 kubectl apply -f -
 ```
 
+You can now access:
+* the core API at https://${UNIQUE_DNS_PREFIX}.eastus.cloudapp.azure.com/
+* the admin interface at https://${UNIQUE_DNS_PREFIX}.eastus.cloudapp.azure.com/admin/
+
+Change in the URL the region and the DNS name to match your deployment.
+
 # Large Language Models
 
 ## Use Cheshire Cat with Azure OpenAI
@@ -190,6 +196,9 @@ curl -X 'PUT' \
 }'
 ```
 ## Add a NodePools with GPUs to run local models
+
+Experimental and not documented yet:
+
 ```
 az aks nodepool add \
     --resource-group cheshire-cat \
