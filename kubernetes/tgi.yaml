@@ -1,0 +1,79 @@
+# Pod equivalent to this container:
+# docker run --gpus all --shm-size 1g -p 8080:80 -v $volume:/data ghcr.io/huggingface/text-generation-inference:0.8 --model-id $model --num-shard $num_shard
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: text-generation-inference
+  labels:
+    run: text-generation-inference
+spec:
+  containers:
+    - name: text-generation-inference
+      image: ghcr.io/huggingface/text-generation-inference:0.8.2
+      env:
+        - name: RUST_BACKTRACE
+          value: "1"
+        - name: NCCL_SHM_DISABLE
+          value: "1"
+      #command: ["--model-id", "$model", "--num-shard", "$num_shard"]
+      command:
+        - "text-generation-launcher"
+        - "--model-id"
+        - "tiiuae/falcon-40b"
+        # - "--quantize"
+        #- "bitsandbytes"
+        - "--num-shard"
+        - "2"
+      ports:
+        - containerPort: 80
+          name: http
+      volumeMounts:
+        - name: falcon-40b
+          mountPath: /data
+        - name: shm
+          mountPath: /dev/shm
+  volumes:
+    - name: falcon-40b
+      persistentVolumeClaim:
+        claimName: falcon-40b
+    - name: shm
+      emptyDir:
+        medium: Memory
+        sizeLimit: 10Gi
+
+  nodeSelector:
+    agentpool: gpunp
+  tolerations:
+    - key: sku
+      operator: Equal
+      value: gpu
+      effect: NoSchedule
+  restartPolicy: Never
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: falcon-40b
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: managed-csi-premium
+  resources:
+    requests:
+      storage: 500Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: text-generation-inference
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    run: text-generation-inference
+  type: ClusterIP
+
