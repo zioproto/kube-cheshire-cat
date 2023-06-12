@@ -11,7 +11,7 @@ WORKDIR /admin
 RUN apt-get -y update && apt-get install -y curl xz-utils libmagic-mgc libmagic1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* &&\
-    curl -sL https://github.com/cheshire-cat-ai/core/archive/main.tar.gz | tar xz -C /app --strip-components=1 &&\
+    curl -sL https://github.com/zioproto/cheshire-cat/archive/HuggingFaceTextGenInference.tar.gz | tar xz -C /app --strip-components=1 &&\
     curl -sL https://github.com/cheshire-cat-ai/admin-vue/archive/main.tar.gz | tar xz -C /admin --strip-components=1 &&\
     NODEARCH= && dpkgArch="$(dpkg --print-architecture)" &&\
     case "${dpkgArch##*-}" in \

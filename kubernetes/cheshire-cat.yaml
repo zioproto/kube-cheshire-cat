@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: core
-        image: HUB/cheshire-cat-core:latest
+        image: HUB/cheshire-cat-core:hf
         imagePullPolicy: Always
         env:
         - name: CORE_HOST
