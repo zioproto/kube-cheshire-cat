@@ -2,11 +2,6 @@
 
 This is a simple example of how to run the [cheshire cat](http://github.com/cheshire-cat-ai/core) on Azure Kubernetes Service.
 
-**WARNING**: this is a proof of concept, not a production ready deployment. The admin container running the Node.js web interface does not implement any authentication or authorization to connect to the core containers. The core container is exposed to the internet without any authentication or authorization, and it is possible to leak your OpenAI keys to the world. Use at your own risk.
-
-* https://github.com/cheshire-cat-ai/admin-vue/issues/2
-* PR https://github.com/zioproto/kube-cheshire-cat/pull/1
-
 ## Docker images
 
 The necessary Docker images are available at:
@@ -95,9 +90,11 @@ Customize the following variables:
 ```bash
 HUB=zioproto
 UNIQUE_DNS_PREFIX=cheshire-cat
+API_KEY=$(openssl rand -hex 16 | | base64)
 cat kubernetes/cheshire-cat.yaml | \
 sed -e "s/HUB/${HUB}/" |
 sed -e "s/UNIQUE_DNS_PREFIX/${UNIQUE_DNS_PREFIX}/" |
+sed -e "s/SECRET_VALUE/${API_KEY}/" |
 kubectl apply -f -
 ```
 
@@ -115,6 +112,7 @@ UNIQUE_DNS_PREFIX=cheshire-cat
 cat kubernetes/gateway.yaml | \
 sed -e "s/EMAIL/${EMAIL}/" |
 sed -e "s/UNIQUE_DNS_PREFIX/${UNIQUE_DNS_PREFIX}/" |
+sed -e "s/SECRET_VALUE/${API_KEY}/" |
 kubectl apply -f -
 ```
 
