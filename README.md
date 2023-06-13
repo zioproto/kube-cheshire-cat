@@ -48,12 +48,14 @@ helm upgrade istio-base istio/base \
     --install \
     --create-namespace \
     --wait \
-    --namespace istio-system
+    --namespace istio-system \
+    --version 1.17.3
 helm upgrade istiod istio/istiod \
     --install \
     --create-namespace \
     --wait \
-    --namespace istio-system
+    --namespace istio-system \
+    --version 1.17.3
 ```
 
 ## Install cert-manager
