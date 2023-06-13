@@ -28,8 +28,6 @@ kind: Gateway
 metadata:
   name: cheshire-cat
   namespace: default
-  labels:
-    istio.io/rev: asm-1-17
   annotations:
     service.beta.kubernetes.io/azure-dns-label-name: "UNIQUE_DNS_PREFIX"
     service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: "/healthz/ready"
