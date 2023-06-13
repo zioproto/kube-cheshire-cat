@@ -12,18 +12,6 @@ The necessary Docker images are available at:
 Create an AKS cluster with the Azure Service Mesh addon, which is required for the Gateway API to work.
 
 ```bash
-# Update the aks-preview extension
-az extension update --name aks-preview
-
-# Register the preview feature AzureServiceMesh
-az feature register --namespace "Microsoft.ContainerService" --name "AzureServiceMeshPreview"
-
-# Wait for RegistrationState to be "Registered"
-az feature show --namespace "Microsoft.ContainerService" --name "AzureServiceMeshPreview"
-
-# Register the provider again
-az provider register -n Microsoft.ContainerService
-
 #Create a resource group
 az group create --name cheshire-cat --location eastus
 
@@ -37,8 +25,7 @@ az aks create \
  --node-vm-size Standard_DS3_v2 \
  --node-count 2 \
  --auto-upgrade-channel rapid \
- --node-os-upgrade-channel  NodeImage \
- --enable-asm
+ --node-os-upgrade-channel  NodeImage
 
 # Get credentials
  az aks get-credentials --resource-group cheshire-cat --name cheshire-cat --overwrite-existing
@@ -50,7 +37,25 @@ Install the Gateway API CRDs
 
 ```bash
 kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
-  { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v0.6.1" | kubectl apply -f -; }
+  { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v0.7.1" | kubectl apply -f -; }
+```
+## Install Istio
+
+```bash
+helm repo add istio https://istio-release.storage.googleapis.com/charts
+helm repo update
+helm upgrade istio-base istio/base \
+    --install \
+    --create-namespace \
+    --wait \
+    --namespace istio-system \
+    --version 1.17.3
+helm upgrade istiod istio/istiod \
+    --install \
+    --create-namespace \
+    --wait \
+    --namespace istio-system \
+    --version 1.17.3
 ```
 
 ## Install cert-manager
@@ -90,7 +95,7 @@ Customize the following variables:
 ```bash
 HUB=zioproto
 UNIQUE_DNS_PREFIX=cheshire-cat
-API_KEY=$(openssl rand -hex 16 | | base64)
+API_KEY=$(openssl rand -hex 16 | base64)
 cat kubernetes/cheshire-cat.yaml | \
 sed -e "s/HUB/${HUB}/" |
 sed -e "s/UNIQUE_DNS_PREFIX/${UNIQUE_DNS_PREFIX}/" |
@@ -203,8 +208,17 @@ az aks nodepool add \
     --cluster-name  cheshire-cat \
     --name gpunp \
     --node-count 1 \
-    --node-vm-size Standard_NC24ads_A100_v4 \
+    --node-vm-size Standard_NC48ads_A100_v4 \
     --node-taints sku=gpu:NoSchedule \
     --aks-custom-headers UseGPUDedicatedVHD=true
+
+```
+
+Remove the pool:
+```
+az aks nodepool delete \
+    --resource-group cheshire-cat \
+    --cluster-name  cheshire-cat \
+    --name gpunp
 
 ```
