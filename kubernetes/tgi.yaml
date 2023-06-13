@@ -15,34 +15,31 @@ spec:
       env:
         - name: RUST_BACKTRACE
           value: "1"
-        - name: NCCL_SHM_DISABLE
-          value: "1"
+        #- name: NCCL_SHM_DISABLE
+        #  value: "1"
       #command: ["--model-id", "$model", "--num-shard", "$num_shard"]
       command:
         - "text-generation-launcher"
         - "--model-id"
-        - "tiiuae/falcon-40b"
-        # - "--quantize"
-        #- "bitsandbytes"
+        - "tiiuae/falcon-40b-instruct"
         - "--num-shard"
         - "2"
       ports:
         - containerPort: 80
           name: http
       volumeMounts:
-        - name: falcon-40b
+        - name: falcon-40b-instruct
           mountPath: /data
         - name: shm
           mountPath: /dev/shm
   volumes:
-    - name: falcon-40b
+    - name: falcon-40b-instruct
       persistentVolumeClaim:
-        claimName: falcon-40b
+        claimName: falcon-40b-instruct
     - name: shm
       emptyDir:
         medium: Memory
-        sizeLimit: 10Gi
-
+        sizeLimit: 1Gi
   nodeSelector:
     agentpool: gpunp
   tolerations:
@@ -55,7 +52,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-    name: falcon-40b
+    name: falcon-40b-instruct
 spec:
   accessModes:
   - ReadWriteOnce
