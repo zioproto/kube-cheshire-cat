@@ -25,6 +25,7 @@ RUN apt-get -y update && apt-get install -y curl xz-utils libmagic-mgc libmagic1
     esac &&\
     pip install -U pip && \
     pip install --no-cache-dir /app/core &&\
+    python3 -c "import nltk; nltk.download('punkt')" &&\
     python3 /app/core/install_plugin_dependencies.py &&\
 ### ADMIN (static build) ###
     curl -sL https://github.com/pieroit/cheshire-cat-admin/archive/main.tar.gz | tar xz -C /admin --strip-components=1 &&\
