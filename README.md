@@ -2,6 +2,11 @@
 
 This is a simple example of how to run the [cheshire cat](http://github.com/cheshire-cat-ai/core) on Azure Kubernetes Service.
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/zioproto/kube-cheshire-cat)
+
+Requires Service Principal Terraform variables to be set as [Codespace Secrets](https://github.com/settings/codespaces):
+https://learn.microsoft.com/en-us/azure/developer/terraform/authenticate-to-azure?tabs=bash#specify-service-principal-credentials-in-environment-variables
+
 ## Docker images
 
 The necessary Docker images are available at:
