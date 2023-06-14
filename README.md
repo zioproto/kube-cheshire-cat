@@ -5,20 +5,30 @@ This is a simple example of how to run the [cheshire cat](http://github.com/ches
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/zioproto/kube-cheshire-cat)
 
 Requires Service Principal Terraform variables to be set as [Codespace Secrets](https://github.com/settings/codespaces):
+
 https://learn.microsoft.com/en-us/azure/developer/terraform/authenticate-to-azure?tabs=bash#specify-service-principal-credentials-in-environment-variables
-
-## Docker images
-
-The necessary Docker images are available at:
-* zioproto/cheshire-cat-core [Dockerfile](core/Dockerfile)
 
 ## Create an AKS cluster
 
-Create an AKS cluster with the Azure Service Mesh addon, which is required for the Gateway API to work.
+Create an AKS cluster with the Azure Container Registry, build the image and push it to the registry.
 
 ```bash
 #Create a resource group
 az group create --name cheshire-cat --location eastus
+
+REGISTRY=unique_name_for_the_registry
+
+#Create a container registry
+az acr create \
+  --name ${REGISTRY} \
+  --resource-group cheshire-cat \
+  --sku Premium \
+  --location eastus \
+  --admin-enabled true
+
+# Build the image
+az acr login --name ${REGISTRY}
+az acr build --registry ${REGISTRY} --image cheshire-cat-core:latest core/
 
 #Create a cluster
 az aks create \
@@ -30,7 +40,8 @@ az aks create \
  --node-vm-size Standard_DS3_v2 \
  --node-count 2 \
  --auto-upgrade-channel rapid \
- --node-os-upgrade-channel  NodeImage
+ --node-os-upgrade-channel  NodeImage \
+ --attach-acr ${REGISTRY}
 
 # Get credentials
  az aks get-credentials --resource-group cheshire-cat --name cheshire-cat --overwrite-existing
@@ -44,6 +55,7 @@ Install the Gateway API CRDs
 kubectl get crd gateways.gateway.networking.k8s.io &> /dev/null || \
   { kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd/experimental?ref=v0.7.1" | kubectl apply -f -; }
 ```
+
 ## Install Istio
 
 ```bash
@@ -94,11 +106,10 @@ helm upgrade --install --wait cheshire-cat qdrant/qdrant
 Install the core and the admin Deployment and ClusterIP Services.
 Customize the following variables:
 
-* HUB: the Docker Hub account where the images are stored
 * UNIQUE_DNS_PREFIX: a unique prefix for the DNS name of the services
 
 ```bash
-HUB=zioproto
+HUB=${REGISTRY}.azurecr.io
 UNIQUE_DNS_PREFIX=cheshire-cat
 API_KEY=$(openssl rand -hex 16 | base64)
 cat kubernetes/cheshire-cat.yaml | \
@@ -113,7 +124,7 @@ kubectl apply -f -
 Install the Istio Gateway and HTTPRoute. It will use cert-manager to generate a TLS certificate for the DNS name of the gateway.
 
 Customize the following variables:
-* EMAIL: the email address to use for the TLS certificate
+* EMAIL: the email address to use for the TLS certificate. Change with a real email or the certificate will not be generated.
 * UNIQUE_DNS_PREFIX: a unique prefix for the DNS name of the services
 
 ```bash
@@ -125,6 +136,16 @@ sed -e "s/UNIQUE_DNS_PREFIX/${UNIQUE_DNS_PREFIX}/" |
 sed -e "s/SECRET_VALUE/${API_KEY}/" |
 kubectl apply -f -
 ```
+
+## Configure basic authentication for the admin interface:
+
+Edit the file `kubernetes/authentication.yaml` to set the username and password for the admin interface.
+
+Then apply the configuration:
+
+```bash
+ kubectl apply -f kubernetes/authentication.yaml
+ ```
 
 You can now access:
 * the core API at https://${UNIQUE_DNS_PREFIX}.eastus.cloudapp.azure.com/
@@ -188,10 +209,11 @@ KEY=$(az cognitiveservices account keys list -o json \
 --resource-group cheshire-cat \
 | jq -r .key1)
 
-CORE_URL="https://${UNIQUE_DNS_PREFIX}-core.eastus.cloudapp.azure.com"
+CORE_URL="https://${UNIQUE_DNS_PREFIX}.eastus.cloudapp.azure.com"
 
 curl -X 'PUT' \
-  ''"$CORE_URL"':1865/settings/llm/LLMAzureOpenAIConfig' \
+  ''"$CORE_URL"'/settings/llm/LLMAzureOpenAIConfig' \
+  -H "access_token: $API_KEY"
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -203,9 +225,9 @@ curl -X 'PUT' \
   "openai_api_key": "'"$KEY"'"
 }'
 ```
-## Add a NodePools with GPUs to run local models
+## Optional: Add a NodePools with GPUs to run local models
 
-Experimental and not documented yet:
+Create a nodepool with a VM SKU `Standard_NC48ads_A100_v4` that has 2 A100 GPUs.
 
 ```
 az aks nodepool add \
@@ -218,6 +240,30 @@ az aks nodepool add \
     --aks-custom-headers UseGPUDedicatedVHD=true
 
 ```
+
+Create a Pod running the [HuggingFace container](https://github.com/huggingface/text-generation-inference) `text-generation-inference`.
+This container downloads and runs models from the HuggingFace Hub, and exposes a REST API to generate text.
+
+```
+kubectl apply -f kubernetes/tgi.yaml
+```
+
+Configure the cheshire-cat core to use the HuggingFace container:
+
+```
+CORE_URL="https://${UNIQUE_DNS_PREFIX}.eastus.cloudapp.azure.com"
+curl -X 'PUT' \
+  ''"$CORE_URL"'/settings/llm/LLMHuggingFaceTextGenInferenceConfig' \
+  -H "access_token: $API_KEY" \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+"inference_server_url": "http://text-generation-inference"
+}'
+```
+
+The SKU `Standard_NC48ads_A100_v4` is more expensive than a regular VM without GPU.
+You can delete the node pool when you don't need it anymore.
 
 Remove the pool:
 ```
