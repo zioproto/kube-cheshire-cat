@@ -1,6 +1,5 @@
 {
   "name": "Terraform AzureCLI and Kubectl",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
   "postAttachCommand": "bash .devcontainer/script.sh",
   "customizations": {
     "vscode": {
@@ -14,10 +13,9 @@
   "features": {
     "azure-cli": "latest",
     "terraform": {
-      "version": "1.4.6",
-      "tflint": "0.46.1",
-      "terragrunt": "0.47.0"
-
+      "version": "latest",
+      "tflint": "latest",
+      "terragrunt": "latest"
     },
     "kubectl-helm-minikube": {
       "version": "latest",
