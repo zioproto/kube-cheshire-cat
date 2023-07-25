@@ -245,7 +245,7 @@ Create a Pod running the [HuggingFace container](https://github.com/huggingface/
 This container downloads and runs models from the HuggingFace Hub, and exposes a REST API to generate text.
 
 ```
-kubectl apply -f kubernetes/tgi.yaml
+kubectl apply -f kubernetes/falcon-40b-instruct.yaml
 ```
 
 Configure the cheshire-cat core to use the HuggingFace container:
