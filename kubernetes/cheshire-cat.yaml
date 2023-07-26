@@ -28,9 +28,9 @@ spec:
           value: "true"
         - name: PYTHONUNBUFFERED
           value: "1"
-        - name: SQLITE_DATABASE_URL
-          value: "sqlite:///database/metadata-v3.db"
-        - name: VECTOR_MEMORY_HOST
+        - name: METADATA_FILE
+          value: "/app/core/database/metadata.json"
+        - name: QDRANT_HOST
           value: "cheshire-cat-qdrant"
         - name: API_KEY
           value: "SECRET_VALUE"
@@ -58,12 +58,12 @@ spec:
       volumes:
       - name: database
         persistentVolumeClaim:
-          claimName: sqlite-disk
+          claimName: tinydb-disk
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-    name: sqlite-disk
+    name: tinydb-disk
 spec:
   accessModes:
   - ReadWriteOnce
