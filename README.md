@@ -27,7 +27,6 @@ az acr create \
   --admin-enabled true
 
 # Build the image
-az acr login --name ${REGISTRY}
 az acr build --registry ${REGISTRY} --image cheshire-cat-core:latest core/
 
 #Create a cluster
