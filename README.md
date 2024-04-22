@@ -96,7 +96,7 @@ helm upgrade cert-manager jetstack/cert-manager \
 ```bash
 helm repo add qdrant https://qdrant.github.io/qdrant-helm
 helm repo update
-helm upgrade --install --wait cheshire-cat qdrant/qdrant
+helm upgrade --install  --set image.tag=v1.7.2 --wait cheshire-cat qdrant/qdrant
 ```
 
 ## Install the Cheshire Cat
