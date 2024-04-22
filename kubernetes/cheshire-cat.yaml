@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: core
-        image: HUB/cheshire-cat-core:latest
+        image: HUB/cheshire-cat-core:1.5.1-azure
         imagePullPolicy: Always
         env:
         - name: CORE_HOST
@@ -32,8 +32,6 @@ spec:
           value: "/app/core/database/metadata.json"
         - name: QDRANT_HOST
           value: "cheshire-cat-qdrant"
-        - name: API_KEY
-          value: "SECRET_VALUE"
         - name: LOG_LEVEL
           value: "DEBUG"
         command: ["uvicorn", "cat.main:cheshire_cat_api", "--host", "0.0.0.0", "--port", "1865", "--forwarded-allow-ips", "*"]
