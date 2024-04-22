@@ -10,7 +10,7 @@ WORKDIR /admin
 RUN apt-get -y update && apt-get install -y curl fastjar libmagic-mgc libmagic1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* &&\
-    curl -sL https://github.com/cheshire-cat-ai/core/archive/refs/tags/1.5.1.tar.gz | tar xz -C /app --strip-components=1 &&\
+    curl -sL https://github.com/cheshire-cat-ai/core/archive/refs/tags/1.5.3.tar.gz | tar xz -C /app --strip-components=1 &&\
     curl -sL https://github.com/cheshire-cat-ai/admin-vue/releases/download/Admin/release.zip | jar -xv &&\
     pip install -U pip && \
     pip install --no-cache-dir /app/core &&\
